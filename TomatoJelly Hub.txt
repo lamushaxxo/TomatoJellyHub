@@ -500,7 +500,7 @@ flingSheriffBtn.MouseButton1Click:Connect(function()
             if hasGun or (currentData[p.Name] and currentData[p.Name].Role == "Sheriff") then flingTarget(p) end
         end
     end
-end))
+end)
 
 -- Скорость
 RunService.Heartbeat:Connect(function()
