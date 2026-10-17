@@ -1,4 +1,4 @@
---[[ TomatoJelly Hub v2.6 — MM2 | Prediction + Full UI ]]
+--[[ TomatoJelly Hub v2.8 — MM2 | Noclip + Fling + Full UI ]]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -7,12 +7,12 @@ local Workspace = game:GetService("Workspace")
 local LP = Players.LocalPlayer
 
 local Theme = {
-    primary = Color3.fromRGB(220, 60, 50),
-    accent = Color3.fromRGB(255, 120, 90),
-    bg = Color3.fromRGB(35, 20, 20),
-    panel = Color3.fromRGB(48, 28, 28),
-    inactive = Color3.fromRGB(70, 40, 40),
-    text = Color3.fromRGB(255, 235, 225),
+    primary   = Color3.fromRGB(220, 60, 50),
+    accent    = Color3.fromRGB(255, 120, 90),
+    bg        = Color3.fromRGB(35, 20, 20),
+    panel     = Color3.fromRGB(48, 28, 28),
+    inactive  = Color3.fromRGB(70, 40, 40),
+    text      = Color3.fromRGB(255, 235, 225),
 }
 
 local YOUR_IMAGE_ID = "135927824606151"
@@ -22,7 +22,7 @@ pcall(function()
     if old then old:Destroy() end
     local oldBlur = game.Lighting:FindFirstChildOfClass("BlurEffect")
     if oldBlur then oldBlur:Destroy() end
-    end)
+end)
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "TomatoJellyHub"
@@ -55,17 +55,17 @@ Instance.new("UICorner", header).CornerRadius = UDim.new(0, 16)
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0.7, 0, 1, 0); title.Position = UDim2.new(0, 14, 0, 0)
-title.BackgroundTransparency = 1; title.Text = "TomatoJelly Hub v2.6"
+title.BackgroundTransparency = 1; title.Text = "TomatoJelly Hub v2.8"
 title.TextColor3 = Theme.accent; title.Font = Enum.Font.GothamBold; title.TextSize = 16
 title.TextXAlignment = Enum.TextXAlignment.Left; title.Parent = header
 
 local function mkBtn(parent, text, size, pos, color)
-local b = Instance.new("TextButton")
-b.Size = size; b.Position = pos; b.BackgroundColor3 = color or Theme.inactive
-b.Text = text; b.TextColor3 = Theme.text; b.Font = Enum.Font.GothamSemibold
-b.TextSize = 13; b.AutoButtonColor = true; b.BorderSizePixel = 0; b.Parent = parent
-Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
-return b
+    local b = Instance.new("TextButton")
+    b.Size = size; b.Position = pos; b.BackgroundColor3 = color or Theme.inactive
+    b.Text = text; b.TextColor3 = Theme.text; b.Font = Enum.Font.GothamSemibold
+    b.TextSize = 12; b.AutoButtonColor = true; b.BorderSizePixel = 0; b.Parent = parent
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+    return b
 end
 
 local closeBtn = mkBtn(header, "X", UDim2.new(0, 28, 0, 28), UDim2.new(1, -36, 0, 6), Theme.primary)
@@ -80,33 +80,31 @@ local content = Instance.new("Frame")
 content.Size = UDim2.new(1, -95, 1, -55); content.Position = UDim2.new(0, 85, 0, 48)
 content.BackgroundTransparency = 1; content.Parent = main
 
-local tabs = {
-    "Main", "ESP", "TP", "Aimbot"
-}
+local tabs = { "Main", "ESP", "TP", "Aimbot", "Exploits" }
 local pages = {}
 
 for _, name in ipairs(tabs) do
-local btn = mkBtn(tabBar, name, UDim2.new(0, 72, 0, 30), UDim2.new(0, 0, 0, 0))
-local page = Instance.new("ScrollingFrame")
-page.Size = UDim2.new(1, 0, 1, 0); page.BackgroundTransparency = 1; page.BorderSizePixel = 0
-page.ScrollBarThickness = 2; page.CanvasSize = UDim2.new(0, 0, 0, 0); page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-page.Visible = (name == "Main"); page.Parent = content
-local lay = Instance.new("UIListLayout", page); lay.Padding = UDim.new(0, 6)
-pages[name] = page
-
-btn.MouseButton1Click:Connect(function()
-    for n, p in pairs(pages) do p.Visible = (n == name) end
-    btn.BackgroundColor3 = Theme.primary
-    for _, other in ipairs(tabBar:GetChildren()) do
-    if other:IsA("TextButton") and other ~= btn then other.BackgroundColor3 = Theme.inactive end
-    end
+    local btn = mkBtn(tabBar, name, UDim2.new(0, 72, 0, 24), UDim2.new(0, 0, 0, 0)) -- Уменьшил высоту кнопок вкладок
+    local page = Instance.new("ScrollingFrame")
+    page.Size = UDim2.new(1, 0, 1, 0); page.BackgroundTransparency = 1; page.BorderSizePixel = 0
+    page.ScrollBarThickness = 2; page.CanvasSize = UDim2.new(0, 0, 0, 0); page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    page.Visible = (name == "Main"); page.Parent = content
+    local lay = Instance.new("UIListLayout", page); lay.Padding = UDim.new(0, 6)
+    pages[name] = page
+    
+    btn.MouseButton1Click:Connect(function()
+        for n, p in pairs(pages) do p.Visible = (n == name) end
+        btn.BackgroundColor3 = Theme.primary
+        for _, other in ipairs(tabBar:GetChildren()) do
+            if other:IsA("TextButton") and other ~= btn then other.BackgroundColor3 = Theme.inactive end
+        end
     end)
-if name == "Main" then btn.BackgroundColor3 = Theme.primary end
+    if name == "Main" then btn.BackgroundColor3 = Theme.primary end
 end
 
 -- ================= ПЛАВАЮЩАЯ КНОПКА =================
 local floatBtn = Instance.new("TextButton")
-floatBtn.Size = UDim2.new(0, 50, 0, 50); floatBtn.Position = UDim2.new(0, 20, 0.5, -25)
+floatBtn.Size = UDim2.new(0, 50, 0, 50); floatBtn.Position = UDim2.new(0, 20, 0.5, -25) 
 floatBtn.BackgroundColor3 = Theme.bg; floatBtn.BorderSizePixel = 0
 floatBtn.Text = ""; floatBtn.AutoButtonColor = false; floatBtn.Visible = false; floatBtn.Parent = gui
 Instance.new("UICorner", floatBtn).CornerRadius = UDim.new(1, 0)
@@ -121,52 +119,56 @@ closeBtn.MouseButton1Click:Connect(function() toggleUI(false) end)
 local draggingFloat, dragStartFloat, startPosFloat, moved = false, nil, nil, false
 floatBtn.InputBegan:Connect(function(i)
     if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-    draggingFloat = true; dragStartFloat = i.Position; startPosFloat = floatBtn.Position; moved = false
+        draggingFloat = true; dragStartFloat = i.Position; startPosFloat = floatBtn.Position; moved = false
     end
-    end)
+end)
 UserInputService.InputChanged:Connect(function(i)
     if draggingFloat and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-    local delta = i.Position - dragStartFloat
-    if delta.Magnitude > 5 then moved = true end
-    if moved then
-    local vp = Workspace.CurrentCamera.ViewportSize
-    floatBtn.Position = UDim2.new(0, math.clamp(startPosFloat.X.Offset + delta.X, 0, vp.X - 50), 0, math.clamp(startPosFloat.Y.Offset + delta.Y, 0, vp.Y - 50))
+        local delta = i.Position - dragStartFloat
+        if delta.Magnitude > 5 then moved = true end
+        if moved then
+            local vp = Workspace.CurrentCamera.ViewportSize
+            floatBtn.Position = UDim2.new(0, math.clamp(startPosFloat.X.Offset + delta.X, 0, vp.X - 50), 0, math.clamp(startPosFloat.Y.Offset + delta.Y, 0, vp.Y - 50))
+        end
     end
-    end
-    end)
+end)
 UserInputService.InputEnded:Connect(function(i)
     if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-    if draggingFloat then draggingFloat = false; if not moved then toggleUI(true) end end
+        if draggingFloat then draggingFloat = false; if not moved then toggleUI(true) end end
     end
-    end)
+end)
 
 local dragging, dragStart, startPos = false, nil, nil
 header.InputBegan:Connect(function(i)
     if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-    dragging = true; dragStart = i.Position; startPos = main.Position
+        dragging = true; dragStart = i.Position; startPos = main.Position
     end
-    end)
+end)
 UserInputService.InputChanged:Connect(function(i)
     if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-    local delta = i.Position - dragStart; local vp = Workspace.CurrentCamera.ViewportSize
-    main.Position = UDim2.new(0, math.clamp(startPos.X.Offset + delta.X, -main.AbsoluteSize.X + 50, vp.X - 50), 0, math.clamp(startPos.Y.Offset + delta.Y, 0, vp.Y - 40))
+        local delta = i.Position - dragStart; local vp = Workspace.CurrentCamera.ViewportSize
+        main.Position = UDim2.new(0, math.clamp(startPos.X.Offset + delta.X, -main.AbsoluteSize.X + 50, vp.X - 50), 0, math.clamp(startPos.Y.Offset + delta.Y, 0, vp.Y - 40))
     end
-    end)
+end)
 UserInputService.InputEnded:Connect(function(i)
     if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dragging = false end
-    end)
+end)
 
 -- ================= МОДУЛИ =================
 local function sectionLabel(parent, text)
-local l = Instance.new("TextLabel")
-l.Size = UDim2.new(1, 0, 0, 20); l.BackgroundTransparency = 1; l.Text = text
-l.TextColor3 = Theme.accent; l.Font = Enum.Font.GothamBold; l.TextSize = 12
-l.TextXAlignment = Enum.TextXAlignment.Left; l.Parent = parent; return l
+    local l = Instance.new("TextLabel")
+    l.Size = UDim2.new(1, 0, 0, 20); l.BackgroundTransparency = 1; l.Text = text
+    l.TextColor3 = Theme.accent; l.Font = Enum.Font.GothamBold; l.TextSize = 12
+    l.TextXAlignment = Enum.TextXAlignment.Left; l.Parent = parent; return l
 end
 
 local function findDroppedGun()
-return Workspace:FindFirstChild("GunDrop", true)
+    return Workspace:FindFirstChild("GunDrop", true)
 end
+
+-- Глобальные данные
+local currentData = {}
+local espHighlights = {}
 
 -- MAIN
 local mainPage = pages["Main"]
@@ -182,7 +184,7 @@ local wsApply = mkBtn(wsRow, "Apply", UDim2.new(0.45, -4, 1, 0), UDim2.new(0.55,
 local targetSpeed = 16
 wsApply.MouseButton1Click:Connect(function()
     local n = tonumber(wsBox.Text); if n then targetSpeed = math.clamp(n, 16, 100) end
-    end)
+end)
 
 local infJumpOn = false
 local infJumpBtn = mkBtn(mainPage, "Infinite Jump: OFF", UDim2.new(1, 0, 0, 28), UDim2.new(0, 0, 0, 0))
@@ -190,13 +192,13 @@ infJumpBtn.MouseButton1Click:Connect(function()
     infJumpOn = not infJumpOn
     infJumpBtn.Text = "Infinite Jump: " .. (infJumpOn and "ON" or "OFF")
     infJumpBtn.BackgroundColor3 = infJumpOn and Theme.primary or Theme.inactive
-    end)
+end)
 UserInputService.JumpRequest:Connect(function()
     if infJumpOn then
-    local char = LP.Character; local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+        local char = LP.Character; local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
-    end)
+end)
 
 -- AUTO GRAB
 local autoGrabOn = false
@@ -205,7 +207,7 @@ autoGrabBtn.MouseButton1Click:Connect(function()
     autoGrabOn = not autoGrabOn
     autoGrabBtn.Text = "Auto-Grab Gun: " .. (autoGrabOn and "ON" or "OFF")
     autoGrabBtn.BackgroundColor3 = autoGrabOn and Theme.primary or Theme.inactive
-    end)
+end)
 
 -- ESP
 local espPage = pages["ESP"]
@@ -218,10 +220,212 @@ gunESPBtn.MouseButton1Click:Connect(function()
     gunESPOn = not gunESPOn
     gunESPBtn.Text = "Gun ESP: " .. (gunESPOn and "ON" or "OFF")
     gunESPBtn.BackgroundColor3 = gunESPOn and Theme.primary or Theme.inactive
-    end)
+end)
 
-local roleColors = {
-    Murderer = Color3.fromRGB(220, 50, 50), Sheriff = Color3.fromRGB(80, 140, 255), Innocent = Color3.fromRGB(100, 200, 100), Hero = Color3.fromRGB(255, 215, 0)
+local roleColors = { Murderer = Color3.fromRGB(220, 50, 50), Sheriff = Color3.fromRGB(80, 140, 255), Innocent = Color3.fromRGB(100, 200, 100), Hero = Color3.fromRGB(255, 215, 0) }
+
+local function updateESP()
+    for p, h in pairs(espHighlights) do if h then h:Destroy() end; espHighlights[p] = nil end
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character then
+            local data = currentData[p.Name]
+            if data and data.Role and not data.Dead then
+                local actualRole = data.Role
+                if actualRole == "Innocent" then
+                    local hasGun = p.Character:FindFirstChild("Gun") or (p.Backpack and p.Backpack:FindFirstChild("Gun"))
+                    if hasGun then actualRole = "Hero" end
+                end
+                local color = roleColors[actualRole] or roleColors.Innocent
+                local h = Instance.new("Highlight")
+                h.FillColor = color; h.FillTransparency = 0.6
+                h.OutlineColor = color; h.OutlineTransparency = 0.1; h.Parent = p.Character
+                espHighlights[p] = h
+            end
+        end
+    end
+end
+
+espStatus.MouseButton1Click:Connect(function()
+    espStatus.BackgroundColor3 = Theme.inactive; espStatus.Text = "Auto ESP: OFF"
+    for p, h in pairs(espHighlights) do if h then h:Destroy() end end
+    espHighlights = {}
+end)
+
+local function fetchData()
+    local ok, res = pcall(function() return ReplicatedStorage.Remotes.Gameplay.GetCurrentPlayerData:InvokeServer() end)
+    if ok and type(res) == "table" then currentData = res; updateESP() end
+end
+task.spawn(function()
+    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gameplay"):WaitForChild("PlayerDataChanged").OnClientEvent:Connect(fetchData)
+end)
+fetchData()
+task.spawn(function() while task.wait(1) do if espStatus.Text == "Auto ESP: ON" then updateESP() end end end)
+
+-- Gun ESP & Auto-Grab Logic
+task.spawn(function()
+    local gunHighlight = nil
+    while task.wait(0.2) do
+        if gunESPOn then
+            local droppedGun = findDroppedGun()
+            if droppedGun then
+                if not gunHighlight or gunHighlight.Adornee ~= droppedGun then
+                    if gunHighlight then gunHighlight:Destroy() end
+                    gunHighlight = Instance.new("Highlight")
+                    gunHighlight.FillColor = Color3.fromRGB(255, 215, 0)
+                    gunHighlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    gunHighlight.Adornee = droppedGun; gunHighlight.Parent = droppedGun
+                end
+            else
+                if gunHighlight then gunHighlight:Destroy(); gunHighlight = nil end
+            end
+        elseif gunHighlight then
+            gunHighlight:Destroy(); gunHighlight = nil
+        end
+
+        if autoGrabOn then
+            local myData = currentData[LP.Name]
+            local isDead = myData and myData.Dead
+            local isMurderer = myData and myData.Role == "Murderer"
+            if not isDead and not isMurderer then
+                local char = LP.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local droppedGun = findDroppedGun()
+                    if droppedGun and droppedGun:IsDescendantOf(Workspace) then
+                        local dist = (hrp.Position - droppedGun.Position).Magnitude
+                        if dist <= 100 and dist > 3 then
+                            local originalPos = hrp.CFrame
+                            hrp.CFrame = CFrame.new(droppedGun.Position + Vector3.new(0, 2.5, 0))
+                            task.wait(0.3)
+                            if hrp and hrp.Parent then hrp.CFrame = originalPos end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- TP
+local tpPage = pages["TP"]
+sectionLabel(tpPage, "Teleport Players")
+local tpGrid = Instance.new("Frame")
+tpGrid.Size = UDim2.new(1, 0, 1, 0); tpGrid.BackgroundTransparency = 1; tpGrid.Parent = tpPage
+local tpLay = Instance.new("UIGridLayout", tpGrid)
+tpLay.CellSize = UDim2.new(0.48, 0, 0, 28); tpLay.CellPadding = UDim2.new(0.04, 0, 0, 6)
+
+local function tpTo(player)
+    if player == LP then return end
+    local myHRP = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+    local tHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if myHRP and tHRP then myHRP.CFrame = tHRP.CFrame * CFrame.new(0, 0, 3) end
+end
+
+local function rebuildTPList()
+    for _, c in ipairs(tpGrid:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP then
+            local b = mkBtn(tpGrid, p.DisplayName, UDim2.new(0,0,0,0), UDim2.new(0,0,0,0), Theme.panel)
+            b.TextSize = 11; b.MouseButton1Click:Connect(function() tpTo(p) end)
+        end
+    end
+end
+rebuildTPList()
+Players.PlayerAdded:Connect(rebuildTPList)
+Players.PlayerRemoving:Connect(function() task.wait(0.1); rebuildTPList() end)
+
+-- AIMBOT
+local aimPage = pages["Aimbot"]
+sectionLabel(aimPage, "Silent Aim")
+local aimStatus = Instance.new("TextLabel")
+aimStatus.Size = UDim2.new(1, 0, 0, 28); aimStatus.BackgroundColor3 = Theme.panel
+aimStatus.TextColor3 = Theme.text; aimStatus.Font = Enum.Font.Gotham; aimStatus.TextSize = 13
+aimStatus.Text = "Target: None"; aimStatus.Parent = aimPage
+Instance.new("UICorner", aimStatus).CornerRadius = UDim.new(0, 8)
+
+local predictValue = 1
+local predictBoxRow = Instance.new("Frame")
+predictBoxRow.Size = UDim2.new(1, 0, 0, 28); predictBoxRow.BackgroundTransparency = 1; predictBoxRow.Parent = aimPage
+local predictLabel = Instance.new("TextLabel")
+predictLabel.Size = UDim2.new(0.5, 0, 1, 0); predictLabel.BackgroundTransparency = 1
+predictLabel.Text = "Prediction:"; predictLabel.TextColor3 = Theme.text; predictLabel.Font = Enum.Font.Gotham
+predictLabel.TextSize = 12; predictLabel.TextXAlignment = Enum.TextXAlignment.Left; predictLabel.Parent = predictBoxRow
+local predictBox = Instance.new("TextBox")
+predictBox.Size = UDim2.new(0.45, 0, 1, 0); predictBox.BackgroundColor3 = Theme.panel; predictBox.TextColor3 = Theme.text
+predictBox.Text = "1"; predictBox.Font = Enum.Font.Gotham; predictBox.TextSize = 13; predictBox.Parent = predictBoxRow
+Instance.new("UICorner", predictBox).CornerRadius = UDim.new(0, 8)
+predictBox:GetPropertyChangedSignal("Text"):Connect(function()
+    local n = tonumber(predictBox.Text); if n then predictValue = math.clamp(n, 0, 2) end
+end)
+
+local silentAimOn = false
+local silentAimBtn = mkBtn(aimPage, "Silent Aim: OFF", UDim2.new(1, 0, 0, 28), UDim2.new(0,0,0,0), Theme.primary)
+silentAimBtn.MouseButton1Click:Connect(function()
+    silentAimOn = not silentAimOn
+    silentAimBtn.Text = "Silent Aim: " .. (silentAimOn and "ON" or "OFF")
+    silentAimBtn.BackgroundColor3 = silentAimOn and Theme.primary or Theme.inactive
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed or not silentAimOn then return end
+    if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+    
+    local gun = LP.Character and LP.Character:FindFirstChild("Gun")
+    if not gun then return end 
+    
+    local targetHead, targetHRP = nil, nil
+    local shortestDist = math.huge
+    
+    if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+        local myPos = LP.Character.HumanoidRootPart.Position
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LP and p.Character and currentData[p.Name] and currentData[p.Name].Role == "Murderer" and not currentData[p.Name].Dead then
+                local head, hrp = p.Character:FindFirstChild("Head"), p.Character:FindFirstChild("HumanoidRootPart")
+                if head and hrp then
+                    local dist = (myPos - head.Position).Magnitude
+                    if dist < shortestDist then shortestDist = dist; targetHead = head; targetHRP = hrp end
+                end
+            end
+        end
+    end
+    
+    if not targetHead or not targetHRP then return end
+    
+    local ping = LP:GetNetworkPing() / 1000
+    local targetVelocity = targetHRP.AssemblyLinearVelocity or Vector3.new(0,0,0)
+    local predictedPos = targetHead.Position + (targetVelocity * ping * predictValue)
+    
+    if gun:FindFirstChild("Shoot") then
+        local hrp = LP.Character:FindFirstChild("HumanoidRootPart")
+        local attach = hrp and hrp:FindFirstChild("GunRaycastAttachment")
+        if attach then gun.Shoot:FireServer(attach.WorldCFrame, CFrame.new(predictedPos)) end
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not main.Visible or not aimPage.Visible then return end
+    local closestDist = math.huge
+    local targetName = "None"
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character and currentData[p.Name] and currentData[p.Name].Role == "Murderer" and not currentData[p.Name].Dead then
+            local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+            if hrp and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+                local dist = (LP.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+                if dist < closestDist then closestDist = dist; targetName = p.DisplayName end
+            end
+        end
+    end
+    if targetName ~= "None" then
+        aimStatus.Text = string.format("Target: %s | Dist: %d", targetName, math.floor(closestDist))
+        aimStatus.TextColor3 = Theme.primary
+    else
+        aimStatus.Text = "No Murderer Alive"
+        aimStatus.TextColor3 = Theme.text
+    end
+end)
+
+-- ================= EXPLOITS (NOCLIP + FLING) =================
+local exploitPage = pages["Explheriff = Color3.fromRGB(80, 140, 255), Innocent = Color3.fromRGB(100, 200, 100), Hero = Color3.fromRGB(255, 215, 0)
 }
 local espHighlights = {}
 local currentData = {}
