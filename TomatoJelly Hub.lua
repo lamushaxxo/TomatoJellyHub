@@ -447,27 +447,35 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- Fling Functions
+-- Fling Function (Метод Сцепки)
 local function flingTarget(targetPlayer)
     if targetPlayer == LP then return end
+    local myChar = LP.Character
+    local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
     local tChar = targetPlayer.Character
     local tHRP = tChar and tChar:FindFirstChild("HumanoidRootPart")
-    if tHRP then
-        -- Физический флинг: создаем бешеное вращение
+    
+    if myHRP and tHRP then
+        -- 1. Запоминаем нашу позицию
+        local oldPos = myHRP.CFrame
+        
+        -- 2. Телепортируемся внутрь жертвы, чтобы создать коллизию
+        myHRP.CFrame = tHRP.CFrame
+        
+        -- 3. Создаем скорость вращения для жертвы
         local spin = Instance.new("BodyAngularVelocity")
-        spin.AngularVelocity = Vector3.new(999999, 999999, 999999)
+        spin.AngularVelocity = Vector3.new(99999, 99999, 99999)
         spin.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
         spin.Parent = tHRP
         
-        -- Подкидываем вверх
-        local lift = Instance.new("BodyVelocity")
-        lift.Velocity = Vector3.new(0, 5000, 0)
-        lift.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-        lift.Parent = tHRP
+        -- 4. Ждем долю секунды, чтобы физика сработала
+        task.wait(0.15)
         
-        task.wait(0.5)
+        -- 5. Уничтожаем спин и возвращаемся обратно
         spin:Destroy()
-        lift:Destroy()
+        if myHRP and myHRP.Parent then
+            myHRP.CFrame = oldPos
+        end
     end
 end
 
@@ -492,7 +500,7 @@ flingSheriffBtn.MouseButton1Click:Connect(function()
             if hasGun or (currentData[p.Name] and currentData[p.Name].Role == "Sheriff") then flingTarget(p) end
         end
     end
-end)
+end))
 
 -- Скорость
 RunService.Heartbeat:Connect(function()
