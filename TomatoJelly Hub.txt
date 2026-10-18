@@ -1,4 +1,4 @@
---[[ TomatoJelly Hub v2.9 — MM2 | Full Build (Noclip + Fling) ]]
+--[[ TomatoJelly Hub v3.3 — MM2 | Smart Auto-Farm ]]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -55,7 +55,7 @@ Instance.new("UICorner", header).CornerRadius = UDim.new(0, 16)
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0.7, 0, 1, 0); title.Position = UDim2.new(0, 14, 0, 0)
-title.BackgroundTransparency = 1; title.Text = "TomatoJelly Hub v2.9"
+title.BackgroundTransparency = 1; title.Text = "TomatoJelly Hub v3.3"
 title.TextColor3 = Theme.accent; title.Font = Enum.Font.GothamBold; title.TextSize = 16
 title.TextXAlignment = Enum.TextXAlignment.Left; title.Parent = header
 
@@ -80,7 +80,7 @@ local content = Instance.new("Frame")
 content.Size = UDim2.new(1, -95, 1, -55); content.Position = UDim2.new(0, 85, 0, 48)
 content.BackgroundTransparency = 1; content.Parent = main
 
-local tabs = { "Main", "ESP", "TP", "Aimbot", "Exploits" }
+local tabs = { "Main", "ESP", "TP", "Aimbot", "Farm", "Exploits" }
 local pages = {}
 
 for _, name in ipairs(tabs) do
@@ -218,6 +218,228 @@ local gunESPOn = false
 local gunESPBtn = mkBtn(espPage, "Gun ESP: OFF", UDim2.new(1, 0, 0, 28), UDim2.new(0, 0, 0, 0))
 gunESPBtn.MouseButton1Click:Connect(function()
     gunESPOn = not gunESPOn
+    gunESPBtn.Text = "Gun ESP: " .. (gunESPOn and "ON" or "OFF")
+    gunESPBtn.BackgroundColor3 = gunESPOn and Theme.primary or Theme.inactive
+end)
+
+local roleColors = { 
+    Murderer = Color3.fromRGB(220, 50, 50), 
+    Sheriff = Color3.fromRGB(80, 140, 255), 
+    Innocent = Color3.fromRGB(100, 200, 100), 
+    Hero = Color3.fromRGB(255, 215, 0),
+    Zombie = Color3.fromRGB(220, 50, 50),   
+    Survivor = Color3.fromRGB(80, 140, 255) 
+}
+
+local function updateESP()
+    for p, h in pairs(espHighlights) do if h then h:Destroy() end; espHighlights[p] = nil end
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character then
+            local data = currentData[p.Name]
+            if data and data.Role and not data.Dead then
+                local actualRole = data.Role
+                if actualRole == "Innocent" then
+                    local hasGun = p.Character:FindFirstChild("Gun") or (p.Backpack and p.Backpack:FindFirstChild("Gun"))
+                    if hasGun then actualRole = "Hero" end
+                end
+                
+                local color = roleColors[actualRole] or roleColors.Innocent
+                local h = Instance.new("Highlight")
+                h.FillColor = color; h.FillTransparency = 0.6
+                h.OutlineColor = color; h.OutlineTransparency = 0.1; h.Parent = p.Character
+                espHighlights[p] = h
+            end
+        end
+    end
+end
+
+espStatus.MouseButton1Click:Connect(function()
+    espStatus.BackgroundColor3 = Theme.inactive; espStatus.Text = "Auto ESP: OFF"
+    for p, h in pairs(espHighlights) do if h then h:Destroy() end end
+    espHighlights = {}
+end)
+
+local function fetchData()
+    local ok, res = pcall(function() return ReplicatedStorage.Remotes.Gameplay.GetCurrentPlayerData:InvokeServer() end)
+    if ok and type(res) == "table" then currentData = res; updateESP() end
+end
+task.spawn(function()
+    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gameplay"):WaitForChild("PlayerDataChanged").OnClientEvent:Connect(fetchData)
+end)
+fetchData()
+task.spawn(function() while task.wait(1) do if espStatus.Text == "Auto ESP: ON" then updateESP() end end end)
+
+-- Gun ESP & Auto-Grab Logic
+task.spawn(function()
+    local gunHighlight = nil
+    while task.wait(0.2) do
+        if gunESPOn then
+            local droppedGun = findDroppedGun()
+            if droppedGun then
+                if not gunHighlight or gunHighlight.Adornee ~= droppedGun then
+                    if gunHighlight then gunHighlight:Destroy() end
+                    gunHighlight = Instance.new("Highlight")
+                    gunHighlight.FillColor = Color3.fromRGB(255, 215, 0)
+                    gunHighlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    gunHighlight.Adornee = droppedGun; gunHighlight.Parent = droppedGun
+                end
+            else
+                if gunHighlight then gunHighlight:Destroy(); gunHighlight = nil end
+            end
+        elseif gunHighlight then
+            gunHighlight:Destroy(); gunHighlight = nil
+        end
+
+        if autoGrabOn then
+            local myData = currentData[LP.Name]
+            local isDead = myData and myData.Dead
+            local isMurderer = myData and (myData.Role == "Murderer" or myData.Role == "Zombie")
+            if not isDead and not isMurderer then
+                local char = LP.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local droppedGun = findDroppedGun()
+                    if droppedGun and droppedGun:IsDescendantOf(Workspace) then
+                        local dist = (hrp.Position - droppedGun.Position).Magnitude
+                        if dist <= 100 and dist > 3 then
+                            local originalPos = hrp.CFrame
+                            hrp.CFrame = CFrame.new(droppedGun.Position + Vector3.new(0, 2.5, 0))
+                            task.wait(0.3)
+                            if hrp and hrp.Parent then hrp.CFrame = originalPos end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- TP
+local tpPage = pages["TP"]
+sectionLabel(tpPage, "Teleport Players")
+local tpGrid = Instance.new("Frame")
+tpGrid.Size = UDim2.new(1, 0, 1, 0); tpGrid.BackgroundTransparency = 1; tpGrid.Parent = tpPage
+local tpLay = Instance.new("UIGridLayout", tpGrid)
+tpLay.CellSize = UDim2.new(0.48, 0, 0, 28); tpLay.CellPadding = UDim2.new(0.04, 0, 0, 6)
+
+local function tpTo(player)
+    if player == LP then return end
+    local myHRP = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+    local tHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if myHRP and tHRP then myHRP.CFrame = tHRP.CFrame * CFrame.new(0, 0, 3) end
+end
+
+local function rebuildTPList()
+    for _, c in ipairs(tpGrid:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP then
+            local b = mkBtn(tpGrid, p.DisplayName, UDim2.new(0,0,0,0), UDim2.new(0,0,0,0), Theme.panel)
+            b.TextSize = 11; b.MouseButton1Click:Connect(function() tpTo(p) end)
+        end
+    end
+end
+rebuildTPList()
+Players.PlayerAdded:Connect(rebuildTPList)
+Players.PlayerRemoving:Connect(function() task.wait(0.1); rebuildTPList() end)
+
+-- AIMBOT
+local aimPage = pages["Aimbot"]
+sectionLabel(aimPage, "Silent Aim")
+local aimStatus = Instance.new("TextLabel")
+aimStatus.Size = UDim2.new(1, 0, 0, 28); aimStatus.BackgroundColor3 = Theme.panel
+aimStatus.TextColor3 = Theme.text; aimStatus.Font = Enum.Font.Gotham; aimStatus.TextSize = 13
+aimStatus.Text = "Target: None"; aimStatus.Parent = aimPage
+Instance.new("UICorner", aimStatus).CornerRadius = UDim.new(0, 8)
+
+local predictValue = 1
+local predictBoxRow = Instance.new("Frame")
+predictBoxRow.Size = UDim2.new(1, 0, 0, 28); predictBoxRow.BackgroundTransparency = 1; predictBoxRow.Parent = aimPage
+local predictLabel = Instance.new("TextLabel")
+predictLabel.Size = UDim2.new(0.5, 0, 1, 0); predictLabel.BackgroundTransparency = 1
+predictLabel.Text = "Prediction:"; predictLabel.TextColor3 = Theme.text; predictLabel.Font = Enum.Font.Gotham
+predictLabel.TextSize = 12; predictLabel.TextXAlignment = Enum.TextXAlignment.Left; predictLabel.Parent = predictBoxRow
+local predictBox = Instance.new("TextBox")
+predictBox.Size = UDim2.new(0.45, 0, 1, 0); predictBox.BackgroundColor3 = Theme.panel; predictBox.TextColor3 = Theme.text
+predictBox.Text = "1"; predictBox.Font = Enum.Font.Gotham; predictBox.TextSize = 13; predictBox.Parent = predictBoxRow
+Instance.new("UICorner", predictBox).CornerRadius = UDim.new(0, 8)
+predictBox:GetPropertyChangedSignal("Text"):Connect(function()
+    local n = tonumber(predictBox.Text); if n then predictValue = math.clamp(n, 0, 2) end
+end)
+
+local silentAimOn = false
+local silentAimBtn = mkBtn(aimPage, "Silent Aim: OFF", UDim2.new(1, 0, 0, 28), UDim2.new(0,0,0,0), Theme.primary)
+silentAimBtn.MouseButton1Click:Connect(function()
+    silentAimOn = not silentAimOn
+    silentAimBtn.Text = "Silent Aim: " .. (silentAimOn and "ON" or "OFF")
+    silentAimBtn.BackgroundColor3 = silentAimOn and Theme.primary or Theme.inactive
+end)
+
+local function getTargetPlayer()
+    local targetHead, targetHRP = nil, nil
+    local shortestDist = math.huge
+    if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+        local myPos = LP.Character.HumanoidRootPart.Position
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LP and p.Character then
+                local data = currentData[p.Name]
+                if data and not data.Dead then
+                    if data.Role == "Murderer" or data.Role == "Zombie" then
+                        local head, hrp = p.Character:FindFirstChild("Head"), p.Character:FindFirstChild("HumanoidRootPart")
+                        if head and hrp then
+                            local dist = (myPos - head.Position).Magnitude
+                            if dist < shortestDist then shortestDist = dist; targetHead = head; targetHRP = hrp end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return targetHead, targetHRP, shortestDist
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed or not silentAimOn then return end
+    if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+    
+    local gun = LP.Character and LP.Character:FindFirstChild("Gun")
+    if not gun then return end 
+    
+    local targetHead, targetHRP = getTargetPlayer()
+    if not targetHead or not targetHRP then return end
+    
+    local ping = LP:GetNetworkPing() / 1000
+    local targetVelocity = targetHRP.AssemblyLinearVelocity or Vector3.new(0,0,0)
+    local predictedPos = targetHead.Position + (targetVelocity * ping * predictValue)
+    
+    if gun:FindFirstChild("Shoot") then
+        local hrp = LP.Character:FindFirstChild("HumanoidRootPart")
+        local attach = hrp and hrp:FindFirstChild("GunRaycastAttachment")
+        if attach then gun.Shoot:FireServer(attach.WorldCFrame, CFrame.new(predictedPos)) end
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not main.Visible or not aimPage.Visible then return end
+    local _, _, closestDist = getTargetPlayer()
+    if closestDist ~= math.huge then
+        aimStatus.Text = string.format("Target Dist: %d", math.floor(closestDist))
+        aimStatus.TextColor3 = Theme.primary
+    else
+        aimStatus.Text = "No Target Alive"
+        aimStatus.TextColor3 = Theme.text
+    end
+end)
+
+-- ================= FARM =================
+local farmPage = pages["Farm"]
+sectionLabel(farmPage, "Auto Farm Candies")
+
+local farmOn = false
+local autoResetOn = false
+local maxCandies = 89
+local currentCandies = 0
+
+local farmBtn = mkBtn(farmPage, "Auto-Farm: OFF", UDim2.new(1, 0, 0, 28), UDim2.new(not gunESPOn
     gunESPBtn.Text = "Gun ESP: " .. (gunESPOn and "ON" or "OFF")
     gunESPBtn.BackgroundColor3 = gunESPOn and Theme.primary or Theme.inactive
 end)
